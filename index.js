@@ -11,7 +11,6 @@ const server = net.createServer ((c) => {
   output.on('error', (error) => { console.log('OUTPUT ERROR:',error); });
 
   input.on('data', (job) => {
-    console.log('Incoming');
     process.stderr.write ('.');
     processJob (job).then ((result) => {
       c.write(JSON.stringify(result));
@@ -23,12 +22,11 @@ const server = net.createServer ((c) => {
   c.pipe(input);
 });
 
-server.listen (5555, 'localhost', () => {
+server.listen (5555, () => {
   console.error ('Server listening on ', server.address ());
 });
 
 function processJob ({ scripts, content }) {
-  console.log ('comeon');
   try {
     const callbacks = compile (scripts);
     return executor ({ callbacks, content });
