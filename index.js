@@ -1,6 +1,15 @@
 const net = require ('net');
 const vm = require ('vm');
 const parser = require('ldjson-stream');
+const os = require('os');
+
+const slugify = require('slugify');
+
+const modules = {
+  slugify: require('slugify')
+}
+
+let processed = 0;
 
 const server = net.createServer ((c) => {
   const input = parser();
@@ -11,9 +20,10 @@ const server = net.createServer ((c) => {
   output.on('error', (error) => { console.log('OUTPUT ERROR:',error); });
 
   input.on('data', (job) => {
-    process.stderr.write ('.');
+    console.error (`Processed ${processed} jobs`);
     processJob (job).then ((result) => {
-      c.write(JSON.stringify(result));
+      c.write(JSON.stringify(result) + os.EOL);
+      processed++;
     }).catch((err) => {
       console.log ('processing error', err);
       c.write(JSON.stringify({ error: err.message }));
@@ -37,7 +47,11 @@ function processJob ({ scripts, content }) {
 
 function compile (scripts) {
   return scripts.map ((code) => {
-    let context = {};
+    let context = {
+      require: (name) => {
+        return modules[name];
+      }
+    };
     vm.runInNewContext (code, context);
     return context.preStore;
   });
@@ -46,5 +60,5 @@ function compile (scripts) {
 function executor ({ callbacks, content }) {
   return callbacks.reduce ((p, callback) => {
     return p.then (callback);
-  }, Promise.resolve(content))
+  }, Promise.resolve (content))
 }

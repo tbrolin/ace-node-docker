@@ -20,6 +20,5 @@ client.on ('error', (error) => {
 
 client.on('data', function(data) {
   console.error ('' + data);
-  console.log('hejdå');
   client.destroy(); // kill client after server's response
 });
